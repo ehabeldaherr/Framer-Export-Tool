@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Framer HTML Exporter - Export Framer Sites to Static HTML</title>
+    <meta name="description" content="Convert Framer websites into static HTML files with clean subfolder routing, CDN media optimization, and telemetry stripping.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-background">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <span class="brand-title">FRAMER<span class="highlight">EXPORT</span></span>
+                    <span class="brand-subtitle">HTML Exporter & Scraper</span>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge badge-tech">CDN Optimized</span>
+                <span class="badge badge-tech">Clean Routing</span>
+            </div>
+        </header>
+
+        <!-- Main Input Card -->
+        <section class="card export-card">
+            <div class="card-header">
+                <h2>Export Framer Website to Static HTML</h2>
+                <p>Convert any Framer published site into host-ready static HTML files with clean route folders (`/about/index.html`).</p>
+            </div>
+
+            <form id="export-form" onsubmit="handleExportSubmit(event)">
+                <div class="input-group">
+                    <div class="url-input-wrapper">
+                        <span class="input-icon">🌐</span>
+                        <input type="url" id="target-url" placeholder="https://your-site.framer.website" required autocomplete="off">
+                        <button type="submit" id="export-btn" class="btn btn-primary">
+                            <span class="btn-text">Export Website</span>
+                            <span class="btn-loader" style="display:none;">⏳ Processing...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="preset-links">
+                    <span class="preset-label">Quick test:</span>
+                    <button type="button" class="preset-chip" onclick="setPreset('https://centipic.framer.website')">centipic.framer.website</button>
+                </div>
+
+                <!-- Advanced Options Accordion -->
+                <div class="options-toggle" onclick="toggleOptions()">
+                    <span id="options-icon">⚙️</span> Advanced Export Options
+                    <span class="caret" id="caret-icon">▼</span>
+                </div>
+
+                <div class="options-panel" id="options-panel">
+                    <div class="options-grid">
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="opt-rewrite" checked>
+                            <div class="checkbox-content">
+                                <span class="checkbox-title">Clean Route Links</span>
+                                <span class="checkbox-desc">Rewrite internal links (e.g., <code>/about</code> &rarr; <code>/about/index.html</code>)</span>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="opt-telemetry" checked>
+                            <div class="checkbox-content">
+                                <span class="checkbox-title">Strip Telemetry & Analytics</span>
+                                <span class="checkbox-desc">Remove <code>events.framer.com</code> and editor scripts for privacy & speed</span>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="opt-badge" checked>
+                            <div class="checkbox-content">
+                                <span class="checkbox-title">Hide Framer Watermark</span>
+                                <span class="checkbox-desc">Remove or hide Framer badge elements from exported pages</span>
+                            </div>
+                        </label>
+
+                        <div class="checkbox-card range-card">
+                            <div class="checkbox-content">
+                                <span class="checkbox-title">Max Pages Limit</span>
+                                <div class="range-wrapper">
+                                    <input type="range" id="opt-maxpages" min="5" max="200" value="100" oninput="updatePageVal(this.value)">
+                                    <span id="maxpages-val" class="range-badge">100 pages</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-alert">
+                        ℹ️ <strong>CDN Media Note:</strong> Images and videos remain hosted on Framer's fast global CDN (<code>framerusercontent.com</code>) so you don't need to re-upload heavy media assets!
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Live Execution Dashboard -->
+        <section class="card dashboard-card" id="dashboard" style="display: none;">
+            <div class="dashboard-header">
+                <div class="status-indicator">
+                    <span class="status-dot pulsing" id="status-dot"></span>
+                    <span class="status-title" id="status-title">Exporting Website...</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 5%;"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Terminal Console -->
+                <div class="console-box">
+                    <div class="console-header">
+                        <span class="console-title">🖥️ Execution Terminal Logs</span>
+                        <button class="btn-clear" onclick="clearConsole()">Clear</button>
+                    </div>
+                    <div class="console-logs" id="console-logs"></div>
+                </div>
+
+                <!-- Routes Table -->
+                <div class="routes-box">
+                    <div class="routes-header">
+                        <span class="routes-title">🗺️ Discovered Routes (<span id="route-count">0</span>)</span>
+                    </div>
+                    <div class="routes-list" id="routes-list">
+                        <div class="route-placeholder">Discovered routes will appear here...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results & Inspector Workspace -->
+        <section class="card results-card" id="results" style="display: none;">
+            <div class="results-banner">
+                <div class="results-info">
+                    <h3>🎉 Export Successful!</h3>
+                    <p><span id="res-page-count">0</span> static HTML pages were exported and packaged.</p>
+                </div>
+                <div class="results-actions">
+                    <a id="download-zip-btn" href="#" class="btn btn-success">
+                        <span>📦 Download Website ZIP</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="workspace-grid">
+                <!-- File Tree -->
+                <div class="tree-panel">
+                    <div class="panel-header">📁 Exported Files</div>
+                    <div class="file-tree" id="file-tree"></div>
+                </div>
+
+                <!-- Code Inspector -->
+                <div class="code-panel">
+                    <div class="panel-header code-header">
+                        <span id="active-file-path">Select a file from tree to view source</span>
+                        <span class="code-badge" id="active-file-size"></span>
+                    </div>
+                    <pre class="code-viewer"><code id="code-content">&lt;!-- Select an exported HTML file to inspect generated source code --&gt;</code></pre>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
